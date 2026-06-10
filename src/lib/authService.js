@@ -1,24 +1,32 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// Servicio de autenticación
-// Principio S: responsabilidad única — gestionar sesión admin.
-// Credenciales hardcodeadas para presentación.
-// En producción real esto iría en el backend con hash bcrypt.
-// ═══════════════════════════════════════════════════════════════════════════
+const SESSION_KEY     = "sx_admin_session";
+const CREDENTIALS_KEY = "sx_admin_credentials";
 
-const ADMIN_USER     = "admin";
-const ADMIN_PASSWORD = "septimoxielo2026";
-const SESSION_KEY    = "sx_admin_session";
+const DEFAULT_CREDENTIALS = {
+  username: "admin",
+  password: "septimoxielo2026",
+};
 
 export const authService = {
-  /**
-   * Intenta hacer login. Retorna { ok: true } o { ok: false, error: string }
-   */
+  getCredentials() {
+    try {
+      const stored = localStorage.getItem(CREDENTIALS_KEY);
+      return stored ? JSON.parse(stored) : DEFAULT_CREDENTIALS;
+    } catch {
+      return DEFAULT_CREDENTIALS;
+    }
+  },
+
+  updateCredentials(newUsername, newPassword) {
+    const creds = { username: newUsername, password: newPassword };
+    localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(creds));
+  },
+
   login(username, password) {
-    if (username === ADMIN_USER && password === ADMIN_PASSWORD) {
+    const creds = this.getCredentials();
+    if (username === creds.username && password === creds.password) {
       const session = {
         user: username,
         loginAt: new Date().toISOString(),
-        // Token simple para demo — en producción sería JWT firmado
         token: btoa(`${username}:${Date.now()}`),
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -33,8 +41,7 @@ export const authService = {
 
   isAuthenticated() {
     try {
-      const session = sessionStorage.getItem(SESSION_KEY);
-      return !!session;
+      return !!sessionStorage.getItem(SESSION_KEY);
     } catch {
       return false;
     }
