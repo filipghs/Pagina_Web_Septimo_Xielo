@@ -1,22 +1,22 @@
-import { createContext, useContext, useReducer, useEffect, useState } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   fetchMenu, insertMenuItem, updateMenuItem, deleteMenuItem, toggleMenuItem,
   fetchReservations, insertReservation, updateReservationStatus, deleteReservation,
   fetchContact, updateContact,
 } from "../lib/dataService";
+import { supabase } from "../lib/supabase";
 import { INITIAL_CONTACT } from "../data/initialData";
 
-// ─── Contexto ────────────────────────────────────────────────────────────────
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [menu,         setMenu]         = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [contact,      setContact]      = useState(INITIAL_CONTACT);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
+  const [menu,             setMenu]             = useState([]);
+  const [reservations,     setReservations]     = useState([]);
+  const [contact,          setContact]          = useState(INITIAL_CONTACT);
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState(null);
+  const [notification,     setNotification]     = useState(null);
 
-  // Cargar datos desde Supabase al montar
   useEffect(() => {
     async function loadAll() {
       try {
@@ -38,7 +38,34 @@ export function AppProvider({ children }) {
     loadAll();
   }, []);
 
-  // ── Acciones de menú ───────────────────────────────────────────────────────
+  useEffect(() => {
+    const channel = supabase
+        .channel("reservations-realtime")
+        .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "reservations" },
+            (payload) => {
+              const newRes = payload.new;
+              setReservations((prev) => {
+                if (prev.find((r) => r.id === newRes.id)) return prev;
+                return [newRes, ...prev];
+              });
+              setNotification({
+                id:     newRes.id,
+                nombre: newRes.nombre,
+                fecha:  newRes.fecha,
+                hora:   newRes.hora,
+              });
+              setTimeout(() => setNotification(null), 6000);
+            }
+        )
+        .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, []);
+
+  const dismissNotification = useCallback(() => setNotification(null), []);
+
   const addMenuItem = async (item) => {
     const newItem = await insertMenuItem(item);
     setMenu((prev) => [...prev, newItem]);
@@ -57,21 +84,23 @@ export function AppProvider({ children }) {
   const toggleItem = async (id, disponible) => {
     await toggleMenuItem(id, !disponible);
     setMenu((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, disponible: !disponible } : i))
+        prev.map((i) => (i.id === id ? { ...i, disponible: !disponible } : i))
     );
   };
 
-  // ── Acciones de reservaciones ─────────────────────────────────────────────
   const addReservation = async (reservation) => {
     const newRes = await insertReservation(reservation);
-    setReservations((prev) => [newRes, ...prev]);
+    setReservations((prev) => {
+      if (prev.find((r) => r.id === newRes.id)) return prev;
+      return [newRes, ...prev];
+    });
     return newRes;
   };
 
   const changeReservationStatus = async (id, status) => {
     await updateReservationStatus(id, status);
     setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status } : r))
+        prev.map((r) => (r.id === id ? { ...r, status } : r))
     );
   };
 
@@ -80,25 +109,21 @@ export function AppProvider({ children }) {
     setReservations((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // ── Acciones de contacto ──────────────────────────────────────────────────
   const saveContact = async (newContact) => {
     await updateContact(newContact);
     setContact(newContact);
   };
 
   return (
-    <AppContext.Provider value={{
-      // Estado
-      menu, reservations, contact, loading, error,
-      // Acciones menú
-      addMenuItem, editMenuItem, removeMenuItem, toggleItem,
-      // Acciones reservaciones
-      addReservation, changeReservationStatus, removeReservation,
-      // Acciones contacto
-      saveContact,
-    }}>
-      {children}
-    </AppContext.Provider>
+      <AppContext.Provider value={{
+        menu, reservations, contact, loading, error,
+        notification, dismissNotification,
+        addMenuItem, editMenuItem, removeMenuItem, toggleItem,
+        addReservation, changeReservationStatus, removeReservation,
+        saveContact,
+      }}>
+        {children}
+      </AppContext.Provider>
   );
 }
 
