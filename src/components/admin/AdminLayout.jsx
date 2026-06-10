@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import { authService } from "../../lib/authService";
+import Dashboard from "./Dashboard";
 import MenuManager from "./MenuManager";
 import ReservationsManager from "./ReservationsManager";
 import ContactManager from "./ContactManager";
@@ -10,6 +11,7 @@ import CategoryManager from "./CategoryManager";
 import RealtimeNotification from "./RealtimeNotification";
 
 const TABS = [
+  { id: "dashboard",     label: "Dashboard",     icon: "📊" },
   { id: "reservaciones", label: "Reservaciones", icon: "📅" },
   { id: "menu",          label: "Menú",          icon: "🍽️" },
   { id: "categorias",    label: "Categorías",    icon: "🏷️" },
@@ -20,7 +22,7 @@ const TABS = [
 export default function AdminLayout() {
   const { reservations } = useApp();
   const navigate = useNavigate();
-  const [activeTab,   setActiveTab]   = useState("reservaciones");
+  const [activeTab,   setActiveTab]   = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pendingCount = reservations.filter((r) => r.status === "pendiente").length;
@@ -32,11 +34,12 @@ export default function AdminLayout() {
 
   const renderTab = () => {
     switch (activeTab) {
+      case "reservaciones": return <ReservationsManager />;
       case "menu":          return <MenuManager />;
       case "categorias":    return <CategoryManager />;
       case "contacto":      return <ContactManager />;
       case "configuracion": return <SettingsManager />;
-      default:              return <ReservationsManager />;
+      default:              return <Dashboard />;
     }
   };
 
