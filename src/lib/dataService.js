@@ -125,3 +125,39 @@ export async function updateContact(changes) {
     .eq("id", 1);
   if (error) throw error;
 }
+// ── CATEGORÍAS ────────────────────────────────────────────────────────────────
+
+export async function fetchCategories() {
+  const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("orden", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function insertCategory(nombre, orden) {
+  const { data, error } = await supabase
+      .from("categories")
+      .insert([{ nombre, orden }])
+      .select()
+      .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCategory(id, changes) {
+  const { data, error } = await supabase
+      .from("categories")
+      .update(changes)
+      .eq("id", id)
+      .select()
+      .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCategory(id) {
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) throw error;
+}

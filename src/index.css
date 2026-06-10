@@ -889,3 +889,22 @@ img { display:block; max-width:100%; }
   flex-shrink: 0;
 }
 .realtime-notif-close:hover { color: var(--cream); }
+.cats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.cat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--gold-faint);
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.3s;
+}
+.cat-card:hover { border-color: var(--gold-dim); }
+.cat-card-top { display: flex; flex-direction: column; gap: 0.2rem; }
+.cat-card-name { font-size: 1rem; color: var(--cream); font-weight: 500; }
+.cat-card-count { font-size: 0.72rem; letter-spacing: 0.1em; color: var(--muted); }
+.cat-card-actions { display: flex; gap: 0.3rem; }

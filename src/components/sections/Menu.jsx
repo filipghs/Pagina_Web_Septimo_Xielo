@@ -1,16 +1,9 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
-import { CATEGORIES } from "../../data/initialData";
 import { Divider, SectionLabel } from "../ui/UIComponents";
 
 function MenuCard({ item }) {
-    const fmt = (n) =>
-        new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "COP",
-            minimumFractionDigits: 0,
-        }).format(n);
-
+    const fmt = (n) => new Intl.NumberFormat("es-CO",{ style:"currency", currency:"COP", minimumFractionDigits:0 }).format(n);
     return (
         <div className="menu-card">
             <div className="menu-card-top">
@@ -24,16 +17,15 @@ function MenuCard({ item }) {
     );
 }
 
-function CategoryFilter({ active, onChange }) {
+function CategoryFilter({ categories, active, onChange }) {
     return (
         <div className="category-filters">
-            {CATEGORIES.map((cat) => (
-                <button
-                    key={cat}
-                    onClick={() => onChange(cat)}
-                    className={`cat-btn ${active === cat ? "cat-btn-active" : ""}`}
-                >
-                    {cat}
+            <button className={`cat-btn ${active === "Todos" ? "cat-btn-active" : ""}`} onClick={() => onChange("Todos")}>
+                Todos
+            </button>
+            {categories.map((cat) => (
+                <button key={cat.id} className={`cat-btn ${active === cat.nombre ? "cat-btn-active" : ""}`} onClick={() => onChange(cat.nombre)}>
+                    {cat.nombre}
                 </button>
             ))}
         </div>
@@ -41,13 +33,11 @@ function CategoryFilter({ active, onChange }) {
 }
 
 export default function Menu() {
-    const { menu } = useApp();
+    const { menu, categories } = useApp();
     const [activeCat, setActiveCat] = useState("Todos");
 
     const visible = menu.filter(
-        (item) =>
-            item.disponible &&
-            (activeCat === "Todos" || item.cat === activeCat)
+        (item) => item.disponible && (activeCat === "Todos" || item.cat === activeCat)
     );
 
     return (
@@ -67,7 +57,7 @@ export default function Menu() {
                     Menú completo en PDF
                 </a>
 
-                <CategoryFilter active={activeCat} onChange={setActiveCat} />
+                <CategoryFilter categories={categories} active={activeCat} onChange={setActiveCat} />
 
                 {visible.length === 0 ? (
                     <p className="empty-state">No hay platos en esta categoría por el momento.</p>
