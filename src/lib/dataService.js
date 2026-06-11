@@ -18,9 +18,10 @@ export async function fetchMenu() {
 }
 
 export async function insertMenuItem(item) {
+  const { desc, ...rest } = item;
   const { data, error } = await supabase
     .from("menu_items")
-    .insert([{ ...item, descripcion: item.desc }])
+    .insert([{ ...rest, descripcion: desc }])
     .select()
     .single();
   if (error) throw error;
